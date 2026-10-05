@@ -1,0 +1,10 @@
+services:
+  pumpwatch:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      PORT: 8787
+      REFRESH_MS: 21600000
+      CYPRUS_OBSERVATORY_URL: https://eforms.eservices.cyprus.gov.cy/MCIT/MCIT/PetroleumPrices
+    restart: unless-stopped

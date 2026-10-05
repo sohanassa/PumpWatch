@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10271f">
+  <meta name="description" content="Find nearby fuel stations and compare reported petrol and diesel prices across Cyprus with PumpWatch.">
+  <title>PumpWatch — Fuel price finder & comparer</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="PumpWatch home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h8A1.5 1.5 0 0 1 16 4.5V21M4 21h13M8 7h5v5H8zM16 8h2l2 3v7a2 2 0 0 1-4 0v-4h-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span>Pump<span class="brand-accent">Watch</span></span>
+    </a>
+    <span class="topbar-note"><span class="flag" aria-hidden="true">CY</span> Fuel prices across Cyprus</span>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="pageTitle">
+      <p class="kicker"><span class="kicker-line"></span> FUEL PRICE FINDER & COMPARER</p>
+      <h1 id="pageTitle">Find a better<br class="desktop-break"> stop along the way.</h1>
+      <p class="intro-copy">Compare reported prices at fuel stations around Cyprus, or find the closest ones to you.</p>
+    </section>
+
+    <section class="finder" aria-label="Find and compare fuel stations">
+      <div class="finder-top">
+        <div>
+          <p class="section-label">CHOOSE YOUR FUEL</p>
+          <div class="fuel-tabs" id="fuelTabs" role="group" aria-label="Fuel type">
+            <button type="button" class="active" data-fuel="95" aria-pressed="true">Unleaded 95</button>
+            <button type="button" data-fuel="98" aria-pressed="false">Unleaded 98</button>
+            <button type="button" data-fuel="diesel" aria-pressed="false">Diesel</button>
+          </div>
+        </div>
+        <button class="location-button" id="locateBtn" type="button" aria-label="Find nearby fuel stations">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="6.2" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="currentColor"/><path d="M10 1v2m0 14v2M1 10h2m14 0h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span id="locationLabel">Find near me</span>
+        </button>
+      </div>
+
+      <div class="filters">
+        <label class="search-box">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.8" cy="8.8" r="5.8" stroke="currentColor" stroke-width="1.6"/><path d="m13.2 13.2 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="search" type="search" placeholder="Search station, town or address" autocomplete="off">
+        </label>
+        <label class="select-wrap">
+          <span class="sr-only">Filter by district</span>
+          <select id="area">
+            <option value="all">All Cyprus</option>
+            <option value="Nicosia">Nicosia</option>
+            <option value="Limassol">Limassol</option>
+            <option value="Larnaca">Larnaca</option>
+            <option value="Paphos">Paphos</option>
+            <option value="Famagusta">Famagusta</option>
+          </select>
+        </label>
+        <label class="select-wrap">
+          <span class="sr-only">Sort stations</span>
+          <select id="sort">
+            <option value="price">Cheapest first</option>
+            <option value="distance">Nearest first</option>
+            <option value="name">Station name</option>
+          </select>
+        </label>
+        <label class="select-wrap radius-select" id="radiusWrap" hidden>
+          <span class="sr-only">Nearby distance</span>
+          <select id="radius">
+            <option value="5">Within 5 km</option>
+            <option value="10">Within 10 km</option>
+            <option value="25" selected>Within 25 km</option>
+            <option value="50">Within 50 km</option>
+            <option value="100">Within 100 km</option>
+          </select>
+        </label>
+      </div>
+      <p class="location-note" id="locationNote" role="status" hidden></p>
+      <div class="feed-status" id="feedStatus" role="status" aria-live="polite">
+        <span class="state-dot" aria-hidden="true"></span>
+        <span id="feedMessage">Loading station prices…</span>
+        <button id="retryBtn" type="button" hidden>Try again</button>
+      </div>
+    </section>
+
+    <section class="results-heading" aria-live="polite">
+      <div>
+        <h2 id="resultsTitle">Stations across Cyprus</h2>
+        <p id="resultsDescription">Fuel prices and station locations from the Cyprus Government Observatory.</p>
+      </div>
+      <span class="results-count" id="count">— stations</span>
+    </section>
+
+    <section class="map-panel" aria-label="Fuel stations map">
+      <div class="map-caption"><span class="map-legend-dot"></span> Station price per litre <span class="map-caption-note">Select a pin for station details</span></div>
+      <div id="map" role="application" aria-label="Map showing fuel station prices in Cyprus"></div>
+    </section>
+    <section class="station-section" aria-labelledby="listTitle">
+      <div class="station-heading">
+        <div>
+          <p class="section-label">COMPARE YOUR OPTIONS</p>
+          <h2 id="listTitle">Fuel stations</h2>
+        </div>
+        <span class="last-updated" id="updated">Waiting for station data</span>
+      </div>
+      <div class="station-list" id="stationList" aria-live="polite"></div>
+      <div class="empty-state" id="emptyState" hidden>
+        <span class="empty-icon" aria-hidden="true">⌕</span>
+        <h3 id="emptyTitle">No stations to show yet</h3>
+        <p id="emptyMessage">Station prices will appear here when the government feed is available.</p>
+      </div>
+    </section>
+
+    <aside class="disclaimer">
+      <span class="disclaimer-icon" aria-hidden="true">✳</span>
+      <p>Station prices come from the <a href="https://data.gov.cy/el/dataset/paratiritirio-lianikon-timon-kaysimon-api" target="_blank" rel="noopener noreferrer">Cyprus Government Retail Fuel Price Observatory</a>. Prices and availability can change; confirm at the pump before filling up.</p>
+    </aside>
+  </main>
+
+  <footer>
+    <span class="footer-brand">Pump<span>Watch</span></span>
+    <span>Find it. Compare it. Fill up smarter.</span>
+    <a href="https://data.gov.cy/el/dataset/paratiritirio-lianikon-timon-kaysimon-api" target="_blank" rel="noopener noreferrer">Official government data ↗</a>
+  </footer>
+</body>
+</html>
